@@ -485,56 +485,16 @@ A análise dos resultados obtidos por meio dos testes de correlação e dos mode
 
 \#gdppcap08 x dem\_score14
 
-    ggplot(banco, aes(gdppcap08, dem_score14)) +
-    geom_jitter()
+\`\`{r} ggplot(banco, aes(gdppcap08, dem\_score14)) + geom\_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-16-1.png)
+cor.test(banco*g**d**p**p**c**a**p*08, *b**a**n**c**o*dem\_score14)
 
-    cor.test(banco$gdppcap08, banco$dem_score14)
+ggplot(banco, aes(dem\_score14, gdppcap08)) + geom\_point() +
+geom\_smooth(method = “lm”)
 
-    ## 
-    ##  Pearson's product-moment correlation
-    ## 
-    ## data:  banco$gdppcap08 and banco$dem_score14
-    ## t = 10.621, df = 113, p-value < 2.2e-16
-    ## alternative hypothesis: true correlation is not equal to 0
-    ## 95 percent confidence interval:
-    ##  0.6015664 0.7879482
-    ## sample estimates:
-    ##       cor 
-    ## 0.7068186
+regressao2.1 &lt;- lm(dem\_score14 ~ gdppcap08, data = banco)
 
-    ggplot(banco, aes(dem_score14, gdppcap08)) +
-      geom_point() +
-      geom_smooth(method = "lm")
-
-    ## `geom_smooth()` using formula 'y ~ x'
-
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-16-2.png)
-
-    regressao2.1 <- lm(dem_score14 ~ gdppcap08, data = banco)  
-
-
-    summary(regressao2.1)
-
-    ## 
-    ## Call:
-    ## lm(formula = dem_score14 ~ gdppcap08, data = banco)
-    ## 
-    ## Residuals:
-    ##     Min      1Q  Median      3Q     Max 
-    ## -3.8534 -0.9155  0.3056  0.9871  2.9946 
-    ## 
-    ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) 4.615e+00  1.838e-01   25.11   <2e-16 ***
-    ## gdppcap08   1.044e-04  9.833e-06   10.62   <2e-16 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 1.433 on 113 degrees of freedom
-    ## Multiple R-squared:  0.4996, Adjusted R-squared:  0.4952 
-    ## F-statistic: 112.8 on 1 and 113 DF,  p-value: < 2.2e-16
+summary(regressao2.1) \`\`\`
 
 \#\#Interpretando os resultados da regressão, podemos observar os
 resíduos, com mínimo de -3.8534 e máximo de 2.9946. O RMSE (erro
@@ -552,7 +512,7 @@ p-valor de 2e-16, baixo valor, que indica alta significância. O xˆ2 é
     ggplot(banco, aes(gdppcap08, democ11)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-17-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-16-1.png)
 
     cor.test(banco$gdppcap08, banco$democ11)
 
@@ -574,7 +534,7 @@ p-valor de 2e-16, baixo valor, que indica alta significância. O xˆ2 é
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-17-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-16-2.png)
 
     regressao2.2 <- lm(democ11 ~ gdppcap08, data = banco)
 
@@ -616,7 +576,7 @@ em 25,28% das vezes.
     ggplot(banco, aes(gdppcap08, fhrate04_rev)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-18-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-17-1.png)
 
     cor.test(banco$gdppcap08, banco$fhrate04_rev)
 
@@ -638,7 +598,7 @@ em 25,28% das vezes.
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-18-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-17-2.png)
 
     regressao2.3 <- lm(fhrate04_rev ~ gdppcap08, data = banco)
 
@@ -680,7 +640,7 @@ p-valor de 1.42e-13, baixo valor, que indica alta significância. O xˆ2 é
     ggplot(banco, aes(gdppcap08, fhrate08_rev)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-19-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-18-1.png)
 
     cor.test(banco$gdppcap08, banco$fhrate08_rev)
 
@@ -702,7 +662,7 @@ p-valor de 1.42e-13, baixo valor, que indica alta significância. O xˆ2 é
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-19-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-18-2.png)
 
     regressao2.4 <- lm(fhrate08_rev ~ gdppcap08, data = banco)
 
@@ -744,7 +704,7 @@ p-valor de 1.22e-13, baixo valor, que indica alta significância. O xˆ2 é
     ggplot(banco, aes(gdppcap08, polity)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-20-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-19-1.png)
 
     ggplot(banco, aes(polity, gdppcap08)) +
       geom_point() +
@@ -752,7 +712,7 @@ p-valor de 1.22e-13, baixo valor, que indica alta significância. O xˆ2 é
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-20-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-19-2.png)
 
     regressao2.5 <- lm(polity ~ gdppcap08, data = banco)
 
@@ -823,14 +783,14 @@ A análise dos resultados obtidos por meio dos testes de correlação e dos mode
     ## The number of histogram bins must be less than 1,000,000.
     ## Did you make `binwidth` too small?
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-21-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-20-1.png)
 
 \#oil x dem\_score14
 
     ggplot(banco, aes(oil, dem_score14)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-22-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-21-1.png)
 
     cor.test(banco$oil, banco$dem_score14)
 
@@ -852,7 +812,7 @@ A análise dos resultados obtidos por meio dos testes de correlação e dos mode
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-22-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-21-2.png)
 
     regressao3.1 <- lm(dem_score14 ~ oil, data = banco)  
 
@@ -894,7 +854,7 @@ p-valor de 0.514, alto valor, que indica baixa significância. O xˆ2 é
     ggplot(banco, aes(oil, democ11)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-23-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-22-1.png)
 
     cor.test(banco$oil, banco$democ11)
 
@@ -916,7 +876,7 @@ p-valor de 0.514, alto valor, que indica baixa significância. O xˆ2 é
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-23-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-22-2.png)
 
     regressao3.2 <- lm(democ11 ~ oil, data = banco)
 
@@ -958,7 +918,7 @@ que X só explica Y em 0,56% das vezes.
     ggplot(banco, aes(oil, fhrate04_rev)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-24-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-23-1.png)
 
     cor.test(banco$oil, banco$fhrate04_rev)
 
@@ -980,7 +940,7 @@ que X só explica Y em 0,56% das vezes.
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-24-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-23-2.png)
 
     regressao3.3 <- lm(fhrate04_rev ~ oil, data = banco)
 
@@ -1023,7 +983,7 @@ das vezes.
     ggplot(banco, aes(oil, fhrate08_rev)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-25-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-24-1.png)
 
     cor.test(banco$oil, banco$fhrate08_rev)
 
@@ -1045,7 +1005,7 @@ das vezes.
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-25-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-24-2.png)
 
     regressao3.4 <- lm(fhrate08_rev ~ oil, data = banco)
 
@@ -1088,7 +1048,7 @@ das vezes.
     ggplot(banco, aes(oil, polity)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-26-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-25-1.png)
 
     ggplot(banco, aes(polity, oil)) +
       geom_point() +
@@ -1096,7 +1056,7 @@ das vezes.
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-26-2.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-25-2.png)
 
     regressao3.5 <- lm(polity ~ oil, data = banco)
 
@@ -1143,7 +1103,7 @@ A análise dos resultados obtidos por meio dos testes de correlação e dos mode
     ggplot(banco, aes(oil, gdppcap08)) +
     geom_jitter()
 
-![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-28-1.png)
+![](exercicio_5-respondido..Rmd_files/figure-markdown_strict/unnamed-chunk-27-1.png)
 
     cor.test(banco$oil, banco$gdppcap08)
 
