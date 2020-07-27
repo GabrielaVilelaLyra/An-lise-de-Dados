@@ -1,0 +1,246 @@
+---
+title: "Exercicio 6"
+author: "Gabriela Vilela"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Neste exercício usaremos o banco de dados do ESEB 2018. Para maiores detalhes sobre o survey, ver neste [link](https://www.cesop.unicamp.br/por/eseb). O questionário da pesquisa de 2018 está [aqui](https://www.cesop.unicamp.br/vw/1IMr0S64wNQ_MDA_91ea3_/quest_04622.pdf) e pode ser consultado para ter maiores detalhes sobre as variáveis.
+
+### O banco de dados está disponível no site do CESOP para usuários cadastrados. Para facilitar o acesso, deixei o banco de dados dispónivel no seguinte endereço: https://github.com/MartinsRodrigo/Analise-de-dados/raw/master/04622.sav
+
+### Baixe o banco de dados pelo R
+
+
+### setwd(Macintosh HD\\Usuários\\gabrielavilela\\Pública\\Exercícios Análise de Dados)
+
+
+### O banco foi feito em SPSS e está em formato SAV. Carregue-o
+
+```{r}
+url <- "https://github.com/MartinsRodrigo/Analise-de-dados/raw/master/04622.sav"
+
+library(poliscidata)
+
+library(tidyverse)
+
+library(haven)
+
+download.file(url, "banco.sav", mode = "wb")
+
+banco <- read_sav("banco.sav")
+
+```
+
+### Utilize as funções para observar o banco de dados
+
+```{r}
+
+glimpse(banco) 
+
+str(banco)
+
+head(banco)
+
+tail(banco)
+
+summary(banco)
+
+```
+
+### A variável Q1607 indica uma nota de 0 a 10 ao candidato Jair Bolsonaro. Valores acima de 10 representam respostas não uteis para nossa pesquisa. Represente graficamente esta variável apenas com os valores válidos e descreva o resultado.*OBS: transforme esta variável para númerica com a função `as.numeric()`.
+
+```{r}
+banco_filtrado <- banco %>%
+ filter(Q1607 <= 10)
+ 
+
+banco_filtrado$Q1607 <- as.numeric(banco_filtrado$Q1607)
+
+
+ggplot(banco_filtrado, aes(Q1607)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=0.5) +
+  geom_density() 
+ 
+```
+O gráfico demonstra que a maioria dos respondentes atribuiram nota acima de 5 ao candidato Jair Bolsonaro, além de que, demonstra uma baixa nas notas intermediárias, e alta concentração de notas nas extremidades (zero e dez), sendo a nota máxima, a que mais foi atribuida pelos respondentes.
+
+
+### Vamos procurar entender o que está associado à aprovação deste candidato. Primeiro, vamos observar a idade dos respondentes com a variável D1A_ID. Represente esta variável graficamente.
+
+```{r}
+ggplot(banco, aes(D1A_ID)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=5) +
+  geom_density()
+```  
+
+### Teste a associação entre a nota dada a Jair Bolsonaro e idade do respondente, explicando o resultado.
+
+```{r}
+cor.test(banco_filtrado$D1A_ID, banco_filtrado$Q1607)
+```
+
+A partir da análise do teste de correlação podemos observar que existe correlação positiva (correlação = 0,10) fraca (intervalo de confiança entre 0.0599630 e 0.1404313) entre as variáveis que representam a idade dos respondentes e a nota atribuída ao candidato Jair Bolsonaro. Ainda que a covariância seja baixa, o p-valor é bastante baixo (p-valor 1.235e-06), o que indica a existência de significância estatística.
+
+
+### Faça uma regressao linear mostrando em que medida a idade do respondente explica a avaliação do candidato Jair Bolsonaro. Interprete o resultado.
+
+```{r}
+regressao1 <- lm(D1A_ID ~ Q1607, data = banco_filtrado)
+
+summary(regressao1)
+```
+
+Interpretando os resultados da regressão, podemos observar os resíduos, com mínimo de -26.861 e máximo de 49.139. O RMSE (erro padrão), que representa a distância média dos valores que foram observados para os estimados, é 15.53. O intercepto, (valor de y para para a variável independente igual a zero) é 38.91631,. O β, que representa a mudança da variável dependente para cada mudança em unidades de X, é 0.39446 (indicando uma relação negativa), isto é, para cada ano de vida a mais dos respondentes, há um acréscimo de 0,39 na nota atribuída ao candidato Jair Bolsonaro; com erro padrão de 0.08112, t de 4.863 e p-valor de 1.24e-06, valor muito baixo, que indica alta significância estatística. O xˆ2 é 0.01007, indicando que X só explica Y em 1% das vezes.
+
+
+### Observe a variável D3_ESCOLA dos respondentes relativa a educação. Represente esta variável graficamente. #OBS: observe que esta variável está como numérica, apesar de ser categórica ordinal. No entanto, trate-a como numérica, indicando que quanto maior o valor, maior o nível educacional do respondente.
+
+```{r}
+banco$D3_ESCOLA
+
+ggplot(banco, aes(D3_ESCOLA))+
+  geom_histogram(bins = 30)
+```
+
+### Teste a associação entre a nota dada a Jair Bolsonaro e educação do respondente, explicando o resultado.
+
+```{r}
+cor.test(banco_filtrado$D3_ESCOLA, banco_filtrado$Q1607)
+```
+
+A partir da análise do teste de correlação podemos observar que existe correlação negativa (correlação = -0,06) fraca (intervalo de confiança entre -0.10790092 e -0.02698556) entre as variáveis que representam o grau de instrução dos respondentes e a nota atribuída ao candidato Jair Bolsonaro. Ainda que a covariância seja baixa, o baixo p-valor (0.001114), indica a existência de significância estatística.
+
+
+### Faça uma regressao linear mostrando em que medida a educação do respondente explica a avaliação do candidato Jair Bolsonaro. Interprete o resultado.
+
+```{r}
+regressao2 <- lm(Q1607 ~ D3_ESCOLA , data = banco_filtrado)
+
+summary(regressao2)
+```
+
+Interpretando os resultados da regressão, podemos observar os resíduos, com mínimo de -6.1022 e máximo de 4.9629. O RMSE (erro padrão), que representa a distância média dos valores que foram observados para os estimados, é 3.962. O intercepto, (valor de y para para a variável independente igual a zero) é  6.10223. O β, que representa a mudança da variável dependente para cada mudança em unidades de X, é -0.11835 (indicando uma relação negativa); com erro padrão de 0.03626 , t de -3.264 e p-valor de 0.00111, valor baixo, que indica alta significância estatística. O xˆ2 é 0.004564, indicando que X só explica Y em 0,45% das vezes.
+
+
+
+### Observe a variável D9 sobre renda dos respondentes. Represente esta variável graficamente. #OBS: note que os valores 9999998 e 9999999 devem ser descartados.
+
+```{r}
+banco$D9
+
+banco_filtrado2 <- banco_filtrado %>%
+  filter(D9 < 9999998)
+
+
+ggplot(banco_filtrado2, aes(" ",D9))+
+  geom_boxplot()
+
+```
+
+### Teste a associação entre a nota dada a Jair Bolsonaro e renda do respondente, explicando o resultado.
+
+```{r}
+cor.test(banco_filtrado2$D9, banco_filtrado2$Q1607)
+```
+
+A partir da análise do teste de correlação podemos observar que existe correlação relevante entre as variáveis que representam a renda do respondente e a nota atribuída ao candidato Jair Bolsonaro (intervalo de confiança entre  -0.04150014 e 0.05052010), inclui o valor zero. Além disso, o alto p-valor (0.8474), indica a inexistência de significância estatística.
+
+
+### Faça uma regressao linear mostrando em que medida a renda do respondente explica a avaliação do candidato Jair Bolsonaro. Interprete o resultado.
+
+```{r}
+regressao3 <- lm(Q1607 ~ D9, data = banco_filtrado2)
+
+summary(regressao3)
+```
+
+Interpretando os resultados da regressão, podemos observar os resíduos, com mínimo de -5.8476 e máximo de 4.4213. O RMSE (erro padrão), que representa a distância média dos valores que foram observados para os estimados, é 3.959. O intercepto, (valor de y para para a variável independente igual a zero) é  5.578e+00. O β, que representa a mudança da variável dependente para cada mudança em unidades de X, é 5.857e-06 (indicando uma relação positiva); com erro padrão de 3.043e-05, t de 0.192 e um alto p-valor de 0.847, que indica baixa significância estatística. O xˆ2 é 0.03703, indicando que X explica Y em 3,70% das vezes.
+
+
+### Deixando as variáveis socio-economicas de lado, vamos analisar agora variáveis relativas a preferências políticas.
+
+### A variável Q1501 indica uma nota de 0 a 10 ao PT. Valores acima de 10 representam respostas não uteis para nossa pesquisa. Represente graficamente esta variável apenas com os valores válidos e descreva o resultado.
+
+```{r}
+banco_filtrado3 <- banco_filtrado %>%
+ filter(Q1501 <= 10)
+
+ggplot(banco_filtrado3, aes(Q1501))+
+  geom_histogram(bins = 30)
+```
+
+O gráfico demonstra que a maioria dos respondentes atribuiram nota inferior a 5 ao PT, além de que, demonstra uma baixa nas notas intermediárias, e uma maior concentração de notas nas extremidades (zero e dez), sendo a nota mínima, a que mais foi atribuida pelos respondentes, seguida de 10, com menos da metade de atribuições que a nota zero.
+
+
+### Teste a associação entre a nota dada a Jair Bolsonaro e a nota dada ao PT, explicando o resultado.
+
+```{r}
+cor.test(banco_filtrado3$Q1501, banco_filtrado3$Q1607)
+```
+
+A partir da análise do teste de correlação podemos observar que existe correlação negativa (correlação = --0.39) moderada (intervalo de confiança entre  -0.4320901 e-0.3618260) entre as variáveis que representam a nota atribuída pelos respondentes ao PT e ao candidato Jair Bolsonaro. O p-valor, por sua vez, é bastante baixo (2.2e-16), o que indica a existência de significância estatística.
+
+
+### Faça uma regressao linear mostrando em que medida a nota dada ao PT pelo respondente explica a avaliação do candidato Jair Bolsonaro. Interprete o resultado.
+
+```{r}
+regressao4 <- lm(Q1607 ~ Q1501, data = banco_filtrado3)
+
+summary(regressao4)
+```
+
+Interpretando os resultados da regressão, podemos observar os resíduos, com mínimo de -7.0016 e máximo de 7.1103. O RMSE (erro padrão), que representa a distância média dos valores que foram observados para os estimados, é 3.643. O intercepto, (valor de y para para a variável independente igual a zero) é  7.00156. O β, que representa a mudança da variável dependente para cada mudança em unidades de X, é -0.41118 (indicando uma relação negativa); com erro padrão de 0.02021, t de -20.35e p-valor de 2e-16, valor muito baixo, que indica alta significância estatística. O xˆ2 é 0.158, indicando que X explica Y em 15,8% das vezes.
+
+
+### A variável Q18 indica uma auto-atribuição em uma escala ideologica de 0 a 10, da esquerda para a direita. Valores acima de 10 representam respostas não uteis para nossa pesquisa. Represente graficamente esta variável apenas com os valores válidos e descreva o resultado.
+
+```{r}
+banco_filtrado4 <- banco_filtrado %>%
+filter (Q18 <= 10)
+
+ggplot(banco_filtrado4, aes(Q18))+
+  geom_histogram(bins = 30)
+```  
+
+O gráfico demonstra que a maioria dos respondentes se autoavaliaram como ideologicamente de direita. A maior concentração de respostas está na nota máxima (dez), significando que os respondentes se identificam totalmete com a direta. Há uma alta das respostas também um pouco antes de 5, indicando que parte considerável dos respondentes se considera de centro. Por fim, mais uma leve alta a se considerar, na nota mínima (zero), isto é, indicando que os respondentes se identificam totalmente com a esquerda, no entanto, representam apenas cerca de um terço daqueles que se autoatribuíram nota dez para o critério de identificação ideológica.
+
+
+### Teste a associação entre a nota dada a Jair Bolsonaro e a auto-atribuição ideológica, explicando o resultado.
+
+```{r}
+cor.test(banco_filtrado4$Q18,banco_filtrado4$Q1607)
+```
+
+A partir da análise do teste de correlação podemos observar que existe correlação positiva (correlação = 0.35) de fraca a moderada (intervalo de confiança entre   0.3133128 e 0.3927580) entre as variáveis que representam a nota atribuída ao candidato Jair Bolsonaro e a autoatribuição ideológica. Ainda que a covariância seja de baixa a moderada, o p-valor é bastante baixo (p-valor 2.2e-16), o que indica a existência de significância estatística.
+
+
+### Faça uma regressao linear mostrando em que medida a auto-atribuição ideológica do repondente explica a avaliação do candidato Jair Bolsonaro. Interprete o resultado.
+
+```{r}
+regressao5 <- lm(Q1607 ~ Q18, data = banco_filtrado4)
+
+summary(regressao5)
+```
+
+Interpretando os resultados da regressão, podemos observar os resíduos, com mínimo de -7.1005 e máximo de 6.9936. O RMSE (erro padrão), que representa a distância média dos valores que foram observados para os estimados, é 3.695. O intercepto, (valor de y para para a variável independente igual a zero) é  3.00636. O β, que representa a mudança da variável dependente para cada mudança em unidades de X, é  0.40941 (indicando uma relação positiva); com erro padrão de 0.02509, t de 16.32  e p-valor de 2e-16, valor muito baixo, que indica alta significância estatística. O xˆ2 é 0.1251, indicando que X explica Y em 12,51% das vezes.
+
+
+### Observando o resultado das regressões, você diria que qual tipo de variável explica mais a variação das notas atribuidas a Jair Bolsonaro, as socio-economicas ou políticas?
+
+A partir da observação do rˆ2, nota-se que as variáveis políticas explicam mais as notas atribuídas ao candidato Jair Bolsonaro. Isso porque, a variável Q1501 (nota atribuída ao PT) explica 15,8% da vairação, e a variável Q18 (autoatribuição de ideologia) explica a variação em 12,51% dos casos. Enquanto a idade dos respondentes (D1A_ID) explica apenas 1% da variação, o grau de instrução (D3_ESCOLA) 0,45% e a renda (D9) 3,70%.
+
+
+### Observando o resultado das regressões, você diria que algum modelo erro menos comparado aos outros na nota prevista atribuída a Jair Bolsonaro?
+
+Observando-se os resultados do erro padrão (RMSE) que indica a distância média entre os valores observados e os valores estimados da variável dependente, o modelo que apresenta menor erro é o que relaciona as notas atribuídas ao candidato Jair Bolsonaro e as atribuídas ao PT (RMSE: 3.643). Com exceção da relação que considera a variável Q1607 (RMSE: 15.53), os valores do erro padrão foram muito parecidos.
+
+### Observando o resultado das regressões, você diria que qual(quais) variáveis possui(em) maior efeito no nota atribuída a Jair Bolsonaro?
+
+A partir da análise do β é possível observar o efeito causado pela variável na nota atribuída ao candidato Jair Bolsonaro. Nesse sentido, pode-se afirmar que seria a variável Q1501, que representa as notas atribuídas pelos respondentes ao PT, pois ocasiona efeito negativo de 0.41118.
+
