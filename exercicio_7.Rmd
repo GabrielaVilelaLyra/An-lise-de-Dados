@@ -1,0 +1,148 @@
+---
+title: "Exercicio 7"
+author: "Gabriela Vilela"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
+```
+
+
+### No exercício anterior foram feitos alguns modelos bivariados. Agora faça uma regressão multivariada mostrando como a nota atribuída a Jair Bolsonaro (variável Q1607) pode ser explicada pelas variáveis idade (D1A_ID), educação (D3_ESCOLA), renda (D9), nota atribuída ao PT (Q1501) e auto-atribuição ideológica (Q18) dos respondentes. Interprete o resultado a partir das informações dadas pelo sumário da regressão.
+
+###setwd(Macintosh HD\\Usuários\\gabrielavilela\\Pública\\Exercícios Análise de Dados)
+
+```{r}
+url <- "https://github.com/MartinsRodrigo/Analise-de-dados/raw/master/04622.sav"
+
+library(poliscidata)
+
+library(tidyverse)
+
+library(haven)
+
+library(magrittr)
+
+download.file(url, "banco.sav", mode = "wb")
+
+
+banco <- read_sav("banco.sav")
+```
+
+```{r}
+banco_filtrado <- banco %>%
+ filter(Q1607 <= 10)
+ 
+
+banco_filtrado$Q1607 <- as.numeric(banco_filtrado$Q1607)
+
+
+banco_filtrado2 <- banco_filtrado %>%
+  filter(D9 < 9999998)
+
+
+banco_filtrado3 <- banco_filtrado2 %>%
+ filter(Q1501 <= 10)
+ 
+
+banco_filtrado4 <- banco_filtrado3 %>%
+filter (Q18 <= 10)
+
+
+regressão <- lm(Q1607 ~ D1A_ID + D3_ESCOLA + D9 + Q1501 + Q18, data = banco_filtrado4)
+
+summary(regressão)
+```
+
+O resultado da regressão demonstrou que apresentaram significância estatística as variáveis de escolaridade, avaliação do PT e autoavaliação ideológica. O que sugere que as variáveis de renda e de idade não parecem ter correlação com a avaliação de Jair Bolsonaro. Destaca-se, ainda, que as variáveis significativas de escolaridade e avaliação do PT possuem correlação negativa com a avaliação de Bolsonaro, enquanto a autoavaliação de ideologia possui relação positiva. O rˆ2 é 0,2831, indicando que a variável Q1607 é explicada por tais variáveis independentes em apenas 28,31% das vezes, de modo que provavelmente deveremos controlar por outras variáveis independentes.
+
+
+### Em que medida os resultados se mantém ou se alteram quando comparados com os resultados do exercício anterior, quando foram utilizadas apenas regressões bivariadas?
+
+No exercício anterior, os modelos com variáveis socio-econômicas não foram capazes de explicar as notas atribuidas a Jair Bolsonaro, apesar de apresentarem baixo p-valor. Já as variáveis políticas tiveram maior sucesso em explicar, apresentando rˆ2 de 15,8 (avaliação do PT e 12,51 (autoavaliação ideológica).
+Na rregressão multivariada todas as variáveis independentes são consideradas em conjunto, e uma variável que possuía significância estatística como a que considerava a idade dos respondentes deixou de ter significância. Já a variável de renda se manteve sem significância estatística.
+
+
+### A partir da exposição de gráficos e testes, avalie se o modelo se adequa aos pressupostos que uma regressão linear exige. 
+
+```{r}
+plot(regressão, 1)
+```
+
+A partir da análise gráfica, a princípio, pode parecer que o modelo se adequa quanto ao pressuposto da linearidade uma vez que pra passa praticamente como uma linha horizontal reta no ponto zero do eixo y, no entanto, há um distanciamento da linha, fazendo uma curvatura, o que impede o total cumprimento do pressuposto da linearidade.
+
+
+```{r}
+plot(regressão, 3)
+
+
+library(lmtest)
+
+bptest(regressão)
+
+
+library(car)
+
+ncvTest(regressão) 
+```
+
+Pode-se observar que o modelo não se adequa ao pressuposto da homocedasticidade, tanto pela distribuição não muito uniforme dos pontos acima e abaixo da linha vermelha, e, sobretudo, pelos resultados dos testes bptest e ncvTest que apresentam baixos resultados de p-valor. Sendo assim, é possível descartar a hipótese nula, de que há homocedasticidade.
+
+
+
+Autocorrelação entre casos/resíduos
+
+```{r}
+
+acf(regressão$residuals)
+```
+
+autocorrelação com a função
+
+```{r}
+
+durbinWatsonTest(regressão)
+```
+
+Quanto ao pressuposto da autocorrelação entre casos/resíduos, tanto a plotagem do gráfico, quanto o teste durbinWatsonTest demonstraram inexistência de correlação. A partir da análise do gráfico se observa que as linhas verticais pretas (com exceção da primeira e maior) estão concentradas entre as linhas horizontais tracejadas azuis. Já o teste apresentou um alto p-valor. De modo que não é possível descartar a hipótese nula.
+
+
+Normalidade dos Resíduos
+```{r}
+plot(regressão, 2)
+
+
+library(MASS)
+sresid <- studres(regressão) 
+shapiro.test(sresid)
+```
+
+Quanto à normalidade dos resíduos, à partir da análise gráfica, observa-se que os pontos do gráfico estão distribuídos próximos à linha do gráfico, no entanto, o resultado do shapiro.test demonstra que a distribuição dos resíduos não seguem a linha normal, isso porque o p-valor é baixo.
+
+
+### Caso algum pressuposto não seja satisfeito, quais são as consequências específicas para o modelo estimado?
+
+No caso em questão, não foram satisfeitos os pressupostos da linearidade, da homocedasticidade e da autocorrelação.
+
+A linearidade entre os parâmetros significa que a relação entre a variável dependente e a variável independente pode ser expressa por uma função linear. E a violação desse pressuposto impede que estimação por mínimos quadrados ordinários produza o melhor estimador linear não-viesado.
+
+Quanto à homocedasticidade, pode-se dizer que significa que os resíduos devem variar uniformimente (variância). Ocorre que a violação desse pressuposto, como é o caso, afeta a confiabilidade dos testes de significância e intervalos de confiança.
+
+A normalidade refere-se à distribuição do termo de erro, caso o número de parâmetros estimados supere a quantidade de observações a estimação torna-se matematicamente impossível. A normalidade dos resíduos é essencial para que os resultados do ajuste do modelo sejam confiáveis.
+
+### Considerando o 4o hurdle do livro *Fundamentals...*, faça um modelo de regressão extra adicionando uma variável **numérica** que foi omitida do modelo anterior, mas que possa ter relação causal com a variável dependente (e talvez alguma associação com as independentes anteriores). Justifique a variável extra e analise o resultado. 
+
+### Compare o resultado obtido com o modelo e conclusões anteriores.
+```{r}
+regressão2 <- lm(Q1607 ~ D1A_ID + D3_ESCOLA + D9 + Q1501 + Q18 + Q7, data = banco_filtrado4)
+
+summary(regressão2)
+```
+
+Escolhi a variável numérica Q7 (Quanto você acha que a corrupção está generalizada no Brasil?), uma vez que muitas pessoas disseram optar pelo voto em Jair Bolsonaro por ser uma das propostas de campanha do referido candidato acabar com a corrupção País, e romper com a "velha política". Nesse sentido, entender que a corrupção está generelizada poderia impactar na avaliação do político, no entanto o resultado da regressão demonstrou não haver siginificância estatística entre tal variável e a variável dependente Q1607 pelo baixo p-valor. Possivelmente, por estar a questão da corrupção já enraizada/generalizada na história e na cultura brasileira, acaba por passar despercebida, de modo que o povo brasileiro passa a conviver com ela quase que sem notar. Algumas corrupções são tão comuns e corriqueiras que passam a ser invisíveis ao povo e deixam de ser contabilizadas, muitas vezes.
+Devido à falta de significância estatística, não houve alteração nos valores de rˆ2 e erro padrão para avaliação.
+
+
+
+
