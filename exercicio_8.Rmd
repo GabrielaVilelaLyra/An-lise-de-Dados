@@ -1,0 +1,165 @@
+---
+title: "Exercício 8"
+author: "Gabriela Vilela"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+```
+
+### Continuaremos com a utilização dos dados do ESEB2018. Carregue o banco da mesma forma que nos exercicios anteriores
+
+```{r}
+library(tidyverse)
+library(haven)
+library(scales)
+library(poliscidata)
+
+link <- "https://github.com/MartinsRodrigo/Analise-de-dados/blob/master/04622.sav?raw=true"
+
+
+download.file(link, "04622.sav", mode = "wb")
+
+banco <- read_spss("04622.sav") 
+
+banco <- banco %>%
+  mutate(D2_SEXO = as_factor(D2_SEXO),
+         D10 = as_factor(D10)) %>%
+  filter(Q1607 < 11)
+
+banco$Q1607 <- as.numeric(banco$Q1607)
+```
+
+### Começaremos a utilizar no modelo de regressão variáveis qualitativas/categóricas. A primeira delas é sexo (D2_SEXO). Represente esta variável graficamente.
+
+```{r}
+ggplot(banco, aes(D2_SEXO, ..count../sum(..count..) )) +
+  geom_bar(na.rm = T) +
+  scale_y_continuous(labels = percent)
+```  
+
+
+### Represente graficamente a associação entre sexo e nota atribuida a Bolsonaro (Q1607)
+
+
+```{r}
+ggplot(banco, aes(Q1607, fill = D2_SEXO)) +
+  geom_density(alpha = 0.3)
+
+
+ggplot(banco, aes(D2_SEXO, Q1607)) +
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+
+ggplot(banco, aes(D2_SEXO, Q1607)) +
+geom_boxplot()
+```
+  
+
+### Teste a associação entre sexo e aprovação de Bolsonaro. Qual é sua conclusão?
+
+```{r}
+t.test(Q1607 ~ D2_SEXO, data = banco)
+```
+
+Com um percentual de intervalo de confiança de 95% e um p-valor alto indicando significância estatística, o resultado do teste indica uma diferença entre as médias de aprovação de Jair Bolsonaro pelos respondentes do sexo feminino e masculino, tendo o grupo dos homens atribuibuído melhores notas.
+
+
+### Faça uma regressão bivariada com estas duas variáveis, verificando em que medida sexo explica a nota atribuida a Bolsonaro. Interprete o resultado da regressão (o $\beta$, o $\alpha$, p-valores e medidas de desempenho do modelo)
+
+```{r}
+regressão <- lm(Q1607 ~ D2_SEXO, data = banco)
+summary(regressão)
+```
+
+O resultado da regressão demonstrou um intercepto, (valor de y para para a variável independente igual a zero) de  6.0205, com erro padrão de 0.1178 e t-valor de 51.112, além de p-valor de 2.05e-15. O β, que representa a
+mudança da variável dependente para cada mudança em unidades de X, é -0.9592 (indicando uma relação negativa). O baixo p-valor da correlação (5.178e-09) indica alta significância estatística, no entanto o rˆ2 (0.01458) demonstra que a variável independente explica a dependente em apenas 1,45% dos casos, o que pode indicar baixa relação, ou a necessidade de controle por inúmeras outras variáveis.
+
+
+### Outra variável categórica bastante presente no debate sobre voto na última eleição é religião (D10). Represente esta variável graficamente.
+
+```{r}
+ggplot(banco, aes(..count.., D10)) +
+geom_bar()
+```
+
+### Crie no banco de dados uma variável de religião modificada chamada `religiao` com as categorias "Evangélica", "Católica", "Não tem religião", e agregue todas as outras na categoria "Outras".
+
+```{r}
+Outras <- levels(banco$D10)[-c(3,5,13)]
+
+banco <- banco %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião"))
+
+
+ggplot(banco, aes(religiao, ..count../sum(..count..) )) +
+  geom_bar() +
+  scale_y_continuous(labels = percent)
+```
+
+### Represente graficamente a associação entre religiao e nota atribuida a Bolsonaro 
+
+```{r}
+ggplot(banco, aes(Q1607, fill = religiao)) +
+  geom_density(alpha = 0.3)
+
+
+ggplot(banco, aes(religiao, Q1607)) +
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+
+ggplot(banco, aes(religiao, Q1607)) +
+geom_boxplot()
+```
+
+### Para fazer o teste estatistico da associação entre as variáveis, não podemos usar o teste-t pois neste caso a variável categórica possui diversos níveis. O adequado é utilizar o teste de ANOVA ou o teste de Kruskal. Abaixo ilustramos como fazer esse teste. O Kruskal-test indica se há diferença entre alguma das categorias da variável e a variável contínua, mas não especifica como as diferentes categorias se diferenciam. Isso pode ser obtido com o teste de Wilcox, que compara os agrupamentos par a par. Como você interpreta esse resultado?
+
+```{r}
+kruskal.test(Q1607 ~ religiao, data = banco)
+
+pairwise.wilcox.test(banco$Q1607, banco$religiao,
+                     p.adjust.method = "BH")
+```
+
+
+O resultado do teste de Kruskal apresentou baixo p-valor (3,571e-13), o que demonstra significância estatística na diferença entre alguma das categorias e a variável contínua. 
+Pelo resultado do teste de Wilcoxon, que analisa as categorias a par a par, é possível observar que possuem significância estatística para a avaliação de Jair Bolsonaro os pares de religião: evangélica/católica, não tem religião/evangélica, outras/católica, outras/evangélica, não tem religião/evangélica.
+
+
+
+### Faça uma regressão linear para verificar em que medida religião explica a avaliação de Bolsonaro. Interprete o resultado da regressão (cada um dos $\beta$s, o $\alpha$, p-valores e medidas de desempenho do modelo)
+
+```{r}
+regressão2 <- lm(Q1607 ~ religiao, data = banco)
+summary(regressão2)
+```
+
+O resultado da regressão demonstrou um intercepto, (valor de y para para a variável independente igual a zero) de  5.4410, com erro padrão de 0.1146  e t-valor de 47.470, além de p-valor de 2e-16. O β, que representa a
+mudança da variável dependente para cada mudança em unidades de X, é 0.8184 (indicando uma relação positiva) para a religião evangélica; -0.6325 para os respondentes que não têm religião (indicando uma relação negativa); e -1.3339 para as demais religiões (indicando uma relação negativa). O relativamente baixo p-valor da correlação (0.02484) indica haver significância estatística, no entanto o rˆ2 (0.0261) demonstra que a variável independente religião explica a avaliação de Jair Bolsonaro em apenas 2,61% dos casos, o que pode indicar baixa relação, ou a necessidade de controle por inúmeras outras variáveis.
+
+
+
+
+### Faça uma regressao linear avaliando ao mesmo tempo em que medida religiao e sexo explicam a avaliacao de Bolsonaro. Interprete o resultado de cada um dos coeficientes a partir da representação gráfica destes.
+
+```{r}
+regressão3 <- lm(Q1607 ~ religiao + D2_SEXO, data = banco)
+summary(regressão3)
+
+library(dotwhisker)
+
+dwplot(regressão3, vline = geom_vline(xintercept = 0, colour = "grey60", linetype = 2))
+```
+
+
+O resultado da regressão demonstrou um intercepto, (valor de y para para a variável independente igual a zero) de  5.9493, com erro padrão de  0.1401  e t-valor de 42.477, além de p-valor de 2e-16. O β, que representa a
+mudança da variável dependente para cada mudança em unidades de X, é 0.8637 (indicando uma relação positiva) para a religião evangélica; -0.6813 para os respondentes que não têm religião (indicando uma relação negativa); e -1.3130 para as demais religiões (indicando uma relação negativa); -1.0045 para a variável D2_SEXOFeminino (indicando uma relação negativa). O baixo p-valor da correlação (2.2e-16) indica haver significância estatística, no entanto o rˆ2 (0.04204) demonstra que as variáveis independentes religião e sexo explicam a avaliação de Jair Bolsonaro em apenas 4,2% dos casos, o que pode indicar baixa relação, ou a necessidade de controle por inúmeras outras variáveis.
+
+Quanto ao gráfico dwplot, com intervalo de 95% de confiança, podemos observar que nenhuma variável ou categoria de variável cruza a linha de interpretação, isto é, há significância estatística para o nível de confiança estabelecido. Sendo possível observar no gráfico quando a correlação  entre a variável dependente e variável independente analisada é positiva (religião evangélica), ou negativa (todas as demais).
+
+
+
