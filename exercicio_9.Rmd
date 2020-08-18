@@ -1,8 +1,7 @@
 ---
 title: "Exercicio 9"
-output:
-  html_document:
-    df_print: paged
+author: "Gabriela Vilela"
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
