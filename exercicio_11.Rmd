@@ -1,0 +1,131 @@
+---
+title: "Exercicio 11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+```
+
+
+```{r}
+library(tidyverse)
+library(haven)
+
+link <- "https://github.com/MartinsRodrigo/Analise-de-dados/blob/master/04622.sav?raw=true"
+
+download.file(link, "04622.sav", mode = "wb")
+
+banco <- read_spss("04622.sav") 
+
+banco <- banco %>%
+  mutate(D10 = as_factor(D10)) %>%
+  filter(Q1607 < 11, 
+         Q18 < 11,
+         D9 < 9999998,
+         Q1501 < 11)
+
+
+Outras <- levels(banco$D10)[-c(3,5,13)]
+
+banco <- banco %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião"))
+```
+
+### Faça uma regressão linear avaliando em que medida as variáveis independentes utilizadas nos exercícios 7 e 8, idade(D1A_ID), educação (D3_ESCOLA), renda (D9), nota atribuída ao PT (Q1501), auto-atribuição ideológica (Q18), sexo (D2_SEXO) e religião (variável criada no passo anterior) explicam a avaliação de Bolsonaro (Q1607)
+
+regressao <- lm (Q1607 ~ D1A_ID + D3_ESCOLA + D9 + Q1501 + Q18 + D2_SEXO + religiao, 
+                  data = banco)
+summary(regressao)
+
+confint(regressao)
+
+
+library(dotwhisker)
+
+dwplot(regressao, vline = geom_vline(xintercept = 0, colour = "grey60", linetype = 2))
+
+
+O resultado da regressão demonstrou um intercepto (que representa a mudança da variável dependente para cada mudança em unidades de X), no caso das variáveis independentes serem igual a zero, de 6,216, com erro padrão de 5,365e-01 e t-valor de 11,586, além de p-valor de 2e-16.
+
+O β (que representa a mudança da variável dependente para cada mudança em unidades de X) para a variável  D1A_ID, é 1,040e-02 (indicando uma relação positiva), o erro padrão é de 6,234e-03 e o t-valor de 1,669. O alto p-valor da correlação no valor de 0,095376, indica baixa significância estatística. 
+
+O β para a variável  D3_ESCOLA, é -1,116e-0 (indicando uma relação negativa), o erro padrão é de 4,486e-02, e o t-valor de -2,487. O baixo p-valor da correlação no valor de 0,012982, indica alta significância estatística. 
+
+O β para a variável  D9, é -3,620e-05 (indicando uma relação negativa), o erro padrão é de 2,764e-05, e o t-valor de -1,309. O baixo p-valor da correlação no valor de 0,190576, indica baixa significância estatística.
+
+O β para a variável  Q1501, é -3,946e-01 (indicando uma relação negativa), o erro padrão é de 2,367e-02, e o t-valor de -16,670. O baixo p-valor da correlação, menor que 2e-16, indica alta significância estatística.
+
+O β para a variável  Q18, é 3,161e-01 (indicando uma relação positiva), o erro padrão é de 2,603e-02, e o t-valor de 12,142. O baixo p-valor da correlação, menor que 2e-16, indica alta significância estatística.
+
+O β para a variável  D2_SEXO (Feminino), é -6,874e-01 (indicando uma relação negativa), o erro padrão é de 1,746e-01, e o t-valor de -3,937. O baixo p-valor da correlação (8,63e-05) indica alta significância estatística.
+
+O β para a variável referente à religião evangélica é6,685e-01 (indicando uma relação positiva), o erro padrão é de 1,984e-01, e o t-valor de 3,370. O baixo p-valor da correlação (0,000772) indica alta significância estatística.
+
+O β para a variável referente aos respondentes que não se filiam a nenhuma religião é -7,565e-02 (indicando uma relação negativa), o erro padrão é de 3,485e-01, e o t-valor de -0,217. O alto p-valor da correlação (0,07565) indica baixa significância estatística.
+
+O β para a variável referente a outras religiões é -8,326e-01 (indicando uma relação negativa), o erro padrão é de 3,081e-01, e o t-valor de -2,702. O alto p-valor da correlação (0,006963) indica baixa significância estatística.
+
+Por fim, observa-se que o rˆ2 da regressão foi de 0,3018, de modo que se pode afirmar que a variável dependente é explicada pelo modelo em 30,18% dos cados.
+
+
+### Faça o teste de homoscedasticidade do modelo e corrija as estimações dos coeficientes caso seja necessário.
+
+
+library(lmtest)
+library(car)
+install.packages("sandwich")
+library(sandwich)
+
+
+plot(regressao, 3)
+
+
+plot(regressao, 1)
+
+
+bptest(regressao)
+
+
+ncvTest(regressao) 
+
+
+coeftest(regressao, 
+         vcov = vcovHC(regressao))
+
+
+
+Dados os resultados dos p-valores obtidos nos testes (1,025e-10 e 2,1178e-06), é possível rejeitar a hipótese nula, dessa forma, se pode dizer que o modelo não passou no teste da homocedasticidade, necessitando de correções.
+
+
+### Avalie a multicolinearidade entre as variáveis
+
+
+vif(regressao)
+
+Uma vez que os resultados ficam entre 1,09 e 1,33, pode-se dizer que o modelo satifaz o pressuposto da multicolinearidade (entre 1 e 4, ou entre 1 e 10, a depender o nível de flexibilidade do padrão adotado).
+
+### Verifique a presença de outilier ou observações influentes no modelo
+
+
+plot (regressao, 4)
+
+plot (regressao, 5)
+
+
+Os gráficos demonstram a presença de outliers, sendo possível observar de sua análise que os pontos 160, 399 e 1442 são observações influentes.
+
+### Faça a regressao linear sem a observação mais influente e avalie a alteração do resultado
+
+banco_outlier <- banco %>%
+  slice (-c (160, 399, 1442))
+  
+regressao2 <- lm (Q1607 ~ D1A_ID + D3_ESCOLA + D9 + Q1501 + Q18 + D2_SEXO + religiao, data = banco_outlier)
+
+summary(regressao2)
+
+
+A retirada dos outliers retornou um resultado muito semelhante ao anterior. As variáveis D1A_ID, D9 e a relativa aos respondentes sem religião não são estatisticamente significativas. Quanto às demais variáveis, estas se mantiveram estatisticamente significantes no mesmo nível. O rˆ2 sofreu uma pequena alteração, aumentando para 30,60% o número de casos em que a variável dependente é explicada pelo modelo. 

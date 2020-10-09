@@ -1,0 +1,227 @@
+---
+title: "Exercicio 10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+```
+
+### Continuaremos com a utilização dos dados do ESEB2018. Carregue o banco da mesma forma que nos exercicios anteriores
+
+```{r}
+library(tidyverse)
+library(haven)
+
+link <- "https://github.com/MartinsRodrigo/Analise-de-dados/blob/master/04622.sav?raw=true"
+
+download.file(link, "04622.sav", mode = "wb")
+
+banco <- read_spss("04622.sav") 
+
+banco <- banco %>%
+  mutate(D10 = as_factor(D10)) %>%
+  filter(Q18 < 11,
+         D9 < 9999998,
+         Q1501 < 11,
+         Q12P2_B < 3) %>%
+  mutate(Q12P2_B = case_when(Q12P2_B == 1 ~ 0,  # Quem votou em Haddad = 0
+                             Q12P2_B == 2 ~ 1)) # Quem votou em Bolsonaro = 1
+```
+
+### Crie a mesma variável de religião utilizada no exercício anterior
+
+```{r}
+Outras <- levels(banco$D10)[-c(3,5,13)]
+
+banco <- banco %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião"))
+
+
+```
+
+### Faça uma regressão linear utilizando as mesmas variáveis do exercício 9 - idade(D1A_ID), educação (D3_ESCOLA), renda (D9), nota atribuída ao PT (Q1501), auto-atribuição ideológica (Q18), sexo (D2_SEXO) e religião (variável criada no passo anterior) - explicam o voto em Bolsonaro (Q12P2_B).
+
+```{r}
+regressao <- lm(Q12P2_B ~ D3_ESCOLA + D1A_ID + D9 + Q1501 + Q18 + D2_SEXO + religiao, data = banco)
+
+summary(regressao)
+```
+
+### Interprete o resultado dos coeficientes
+
+Na interpretação do resultado da regressão, β representa a mudança da
+variável dependente para cada mudança em unidades de X. Analisaremos a
+seguir o valor de β para cada variável considerada na regressão.
+
+O valor de β para D3_ESCOLA foi 5.547e-03, com erro padrão de 5.226e-03,
+t-valor 1.061 e um alto p-valor de 0.28873, que indica baixa
+significância estatística.
+
+O valor de β para D1A_ID foi 1.140e-031, com erro padrão de
+7.539e-04, t-valor de  1.512 e alto p-valor de 0.13074, que indica baixa
+significância estatística.
+
+O valor de β para D9 foi -9.837e-07, com erro padrão de 3.196e-06,
+t-valor de -0.308 e alto p-valor de 0.75832, que indica baixa
+significância estatística.
+
+O valor de β para Q1501 foi -7.728e-02, com erro padrão de 2.799e-03,
+t-valor de -27.610 e baixo p-valor <2e-16, indicando haver
+significância estatística.
+
+O valor de β para Q18 foi 2.651e-02, com erro padrão de 3.093e-03,
+t-valor de 8.570 e baixo p-valor <2e-16, indicando haver significância
+estatística.
+
+O valor de β para D2_SEXO (Feminino) foi -5.286e-02, com erro padrão de
+2.089e-02, t-valor de -2,530 e baixo p-valor de 0.01154, indicando haver
+significância estatística.
+
+O valor de β para religiao - Evangélica - foi 7.684e-02, com erro padrão de
+2.363e-02, t-valor de 3.251 e alto p-valor de 0.00118 que indica baixa
+significância estatística.
+
+O valor de β para religiao - Não tem religião - foi -2.746e-03, com erro
+padrão de 4.238e-02, t-valor de -0.065 e alto p-valor de 0.94835, que indica
+baixa significância estatística.
+
+O valor de β para religiao - Outras - foi -7.263e-02, com erro padrão de
+3.678e-02, t-valor de -1.975 e baixo p-valor de 0.04855, que indica haver
+significância estatística.
+
+
+Por fim, o rˆ2, foi de O R-squared de 0.5028, de modo que a variável
+dependente é explicada pelo modelo em 50,28% dos casos.
+
+
+As variáveis relativas à idade, à escolaridade e à renda apresentaram resultados
+não significantes.
+
+
+Nota-se a existência de uma correlação negativa entre a nota atribuída ao PT e 
+o voto no candidato Jair Bolsonaro no segundo turno. Já quanto à auto-atribuição
+ideológica e o voto, tem-se uma correlação positiva, de modo que a maior 
+identificação do respondente com a direita, maior a probabilidade de seu voto 
+em Bolsonaro.
+
+
+Quanto à variável D2_SEXO, observa-se que existe maior probabilidade de os 
+homens votarem no candidato Jair Bolsonaro, do que as mulheres.
+
+
+Por fim, no que se refere à religião, podemos observar que a categoria de 
+referência foi a dos católicos, a qual tendeu a votar mais no candidato Jair 
+Bolsonaro (intercepto 0,7067). Nota-se também que os respondentes evangélicos 
+foram os que mais votaram em Bolsonaro, enquanto aqueles que se identificaram 
+como sendo de outras religiões foram os que menos votaram.
+
+
+
+### O resultado difere dos encontrados anteriormente, quando a variavel dependente era a aprovação de Bolsonaro?
+
+
+Sim, o resultado difere.
+A escolaridade e a idade, que apresentaram significância quanto à avaliação do 
+candidato Jair Bolsonaro, não são estatisticamente significantes no que tange à 
+intenção de voto no candidato no segundo turno da eleição 2018.
+
+Quanto à religião, tanto a variável relativa à relgião evangélica, quanto à
+referente a outras religiões, apresentaram significância estatística para o voto
+no candidato Jair Bolsonaro, enquanto eram estatisticamente insignificantes para
+a aprovação de Bolsonaro, analisada no exercício anterior.
+
+Por fim, observa-se a diferença entre os rˆ2 das duas regressões (30,28% na primeira e 50,28% na segunda).
+
+
+### Faça uma regressão logistica com as mesmas variaveis
+
+```{r}
+install.packages("psc1")
+library(psc1)
+
+regressao_log <- glm(Q12P2_B ~ D3_ESCOLA + D1A_ID + D9 + Q1501 + Q18 + D2_SEXO + religiao, data = banco, family = "binomial")
+
+summary(regressao_log)
+```
+
+
+### Transforme os coeficientes estimados em probabilidade
+
+```{r}
+install.packages("margins")
+install.packages("dotwhisker")
+library(margins)
+library(dotwhisker)
+
+margins(regressao_log)
+
+summary(margins(regressao_log))
+
+efeito_marginal <- summary(margins(regressao_log)) %>%
+  rename(term = factor,
+         estimate = AME,
+         std.error = SE,
+         statistic = z,
+         p.value = p) %>% arrange(estimate)
+
+confint(regressao_log)
+
+dwplot(efeito_marginal)
+```
+
+### Quais foram as diferenças no resultado entre usar a regressão linear e a logistica?
+
+### Em suma, a grande diferença entre uma regressão linear e uma regressão logística, quando a variável dependente é categórica, é que a regressão logística resolve os problemas de heterocedasticidade e o problema da forma funcional. Na regressão logística podemos ter mais confiança nos p-valores e nos intervalos de confiança das variáveis. 
+
+O uso da regressão logística, quando a variável dependente analisada é categórica, permite maior confiabilidade nos p-valores e intervalos de confiança das variáveis independentes. Isso porque, a regressão logística é capaz de consertar problemas como a heterocedasticidade. Ademais, é possível transformar os coeficientes estimados em probabilidade, o que facilita a análise dos resultados.
+
+Em relação às alterações nas variáveis podemos analidar da seguinte forma.
+
+As variáveis relativas à idade, à escolaridade e à renda não apresentaram significância estatística, de modo que não impactam na probabilitade do voto no candidato Jair Bolsonaro.
+
+Quanto à variável Q1501, referente à nota atribuída ao PT, podemos destacar a alteração do erro padrão que caiu de 0,002799 para 0,0009. Além disso, pode-se obervar que a cada ponto a mais atribuído na avaliação do PT, diminuia a probabilidade do respondente ter votado em Bolsonaro em 5,47%
+
+Quanto à variável Q18 referente à auto-atribuição ideológica, pode-se observar que ao aumento de uma unidade (mais próximo da direita), aumenta também a chance do votono canditado Jair Bolsonaro em 2,62%
+
+Quanto à variável D2_SEXO, referente ao sexo do respondente, pode-se afirmar que o sexo feminino tem 5,26% a menos de chance de voto no candidato Jair Bolsonaro. Além disso, como o p-valor da variável diminuiu para 0,0091 na regressão logística, observa-se que há maior confiabilidade na importância estatística dessa variável em influenciar a probabilidade do voto em Bolsonaro.
+
+A religião católica é a religião de referência, podendo-se afirmar que os respondentes identificados como evangélicos possuem 7,35% de chance a mais de ter votado em Jair Bolsonaro. Enquanto aqueles que não possuem religião e os que professam fé em outras religiões têm, respectivamente, 0,25% e 8,17% de chance a menos de ter votado em Bolsonaro.
+
+
+
+### Verifique a quantidade de classificações corretas da regressao logistica e avalie o resultado
+
+```{r}
+install.packages("InformationValue")
+library(InformationValue)
+
+
+predicted_prob <- predict(regressao_log, type = "response")
+misClassError(banco$Q12P2_B, 
+                  predicted_prob, 
+                  threshold = 0.5)
+                  
+                  
+table(banco$Q12P2_B)
+prop.table(table(banco$Q12P2_B))
+0.8301/0.5853659 
+opt_cutoff <- optimalCutoff(banco$Q12P2_B, 
+                            predicted_prob)
+                            
+                            
+confusionMatrix(banco$Q12P2_B, 
+              predicted_prob, 
+              threshold = opt_cutoff)
+              
+              
+prop.table(confusionMatrix(banco$Q12P2_B, 
+                predicted_prob, 
+                threshold = opt_cutoff))
+
+```
+
+Nota-se que a regressão logística melhorou o modelo em mais de 40%. Além disso, as previsões corretas foram de 83,62% dos casos, tendo acertado 960 das 1148 previsões. Quanto aos votos em Jair Bolsonaro, o modelo apresentou incorreção em 7% dos casos, já em relação a Haddad o erro foi 9%. De forma geral se pode afirmar ser um bom modelo.
