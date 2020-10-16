@@ -1,0 +1,434 @@
+---
+title: "Artigo Final - Análise de Dados - códigos"
+Author: Gabriela Vilela Lyra
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+setwd("C:\\Users\\otavi\\Downloads")
+
+Os dados para reprodução desta pesquisa estão disponíveis no seguinte endereço: 
+https://www.dropbox.com/sh/uwixp5lccxdap92/AABee1oKHWB6kOoOFPDq4Umaa?dl=0
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(readxl)
+library(haven)
+library(dplyr)
+library(poliscidata)
+library(vcd)
+library(graphics)
+library(scales)
+library(dotwhisker)
+library(pscl)
+library(ggplot2)
+```
+
+
+#Download dos bancos de dados
+
+##Variável dependente
+```{r}
+
+IPC_TI_linhas <- read_excel("C:/Users/otavi/Downloads/IPC2019.xlsx")
+
+IPC_TI <- IPC_TI_linhas[c(-46, -67, -92, -131, -132, -134, -138, -144, -155),]
+```
+
+O Índice de percepção de corrupção de 2019 foi baixado do banco de dados da Transparência Internacional (https://www.transparency.org/en/cpi/2019/results)
+
+
+##Variáveis independentes
+
+
+##Liberdade da mídia
+
+Foi baixado o banco de dados da V-dem, de onde foram selecionadas as variáveis relativas à liberdade da imprensa (https://www.v-dem.net/en/data/data-version-10/).
+
+```{r}
+vdem <- read_sav("V-Dem-CD-v10.sav")
+
+vdem_filtrado <- vdem %>%
+  filter(year == "2018")
+
+vdem_renomeado <- vdem_filtrado %>%
+  rename(Country = country_name)
+
+v_dem_na <- vdem_renomeado %>%
+  select(Country, year, v2meharjrn, v2merange, v2mecrit)
+```  
+  
+Fora omitidas as observações NA  
+
+```{r}
+v_dem_linhas <-na.omit(v_dem_na)
+```
+
+Foi necessário renomear algumas observações para que todas tivessem a mesma escrita na coluna Country.
+
+```{r}
+
+v_dem_linhas[64,1] <- "Cabo Verde"
+v_dem_linhas[106,1] <- "Congo"
+v_dem_linhas[111,1] <- "Gambia"
+v_dem_linhas[113,1] <- "Guinea Bissau"
+
+v_dem <- v_dem_linhas[c(-8, -26, -27, -28, -32, -35, -37, -42, -45, -47, -55, -58, -73, -90, -91, -109, -115, -122, -124, -126, -129, -131, -132, -138, -148, -160, -171, -173, -176, -178, -180),]
+```
+
+#Variáveis de controle
+
+As variáveis de controle foram retiradas de diferentes bancos de dados, tendo o PIB sido baixado do Banco Mundial, onde é possível realizar o download apenas da variável desejada, sem que haja a necessidade de baixar o banco inteiro (https://data.worldbank.org/indicator/NY.GDP.PCAP.CD).
+
+```{r}
+
+PIB_linhas <- read_csv2("C:/Users/otavi/Downloads/WB-PIB.CSV")
+
+PIB_selecionado <- PIB_linhas %>%
+  select(Country, "2018")
+
+PIB_selecionado_renomeado <- PIB_selecionado %>%
+  rename(PIB2018 = "2018")
+
+PIB_final <- PIB_selecionado_renomeado[c(-126),]
+```
+
+O IDH, por sua vez, foi retirado do banco de dados do Programa de Desenvolvimento das Nações Unidas (http://hdr.undp.org/en/content/human-development-index-hdi), onde também não há necessidade de realização do download do banco inteiro, apenas da variável desejada.
+
+```{r}
+IDH_completo <- read_excel("C:/Users/otavi/Downloads/hdro_statistical_data_table_2.xlsx")
+
+IDH_linhas <- IDH_completo %>%
+  select(Country, "2018")
+
+IDH_final <- IDH_linhas[c(-46, -67, -91, -131, -132, -134, -144, -138, -155),]
+```
+
+A variável de qualidade da democracia foi baixada a partir do site da Freedom House, sem necessidade de baixar o banco inteiro
+
+```{r}
+
+Qualidade_democ_2018 <- read_excel("C:/Users/otavi/Downloads/quali_democ_2018.xlsx", sheet=2)
+
+quali_democ_2018_linhas <- Qualidade_democ_2018 %>%
+  select("Country", "Total")
+
+quali_democ_2018 <- quali_democ_2018_linhas[c(-46, -67, -91, -131, -132, -134, -138, -144, -155),]
+
+```
+
+Foram excluídas linhas dos bancos para garantir que todos contassem com exatamente as mesmas observações na coluna Country.
+
+
+#Banco de dados completo
+
+Por meio da função merge juntou-se todos os bancos, formando um banco completo, em que as colunas seleciondas em cada banco foram transformadas em variáveis para ser possível realizar as correções e regressões.
+
+```{r}
+
+Banco_parcial <- merge(PIB_final,
+                        IDH_final,
+                        by= "Country")
+
+Banco_parcial_2 <- merge(Banco_parcial,
+                         quali_democ_2018,
+                         by= "Country")
+
+Banco_parcial_3 <- merge(Banco_parcial_2,
+                         IPC_TI,
+                         by= "Country")
+
+Banco_completo <- merge(Banco_parcial_3,
+                         v_dem,
+                         by= "Country")
+
+Banco_completo_renomeado <- Banco_completo %>%
+  rename(IPC = 'CPI score 2019', PIB = PIB2018, IDH = "2018", quali_democracia = Total)
+
+```
+
+
+#Descrição gráfica das variáveis
+
+As variáveis analisadas são contínuas, sendo assim, foram escolhidos os gráficos adequados para sua representação.
+
+
+##IPC
+
+```{r}
+ggplot(Banco_completo_renomeado, aes(IPC)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=5) +
+  geom_density() 
+
+ggplot(Banco_completo_renomeado, 
+       aes(x = "", y = IPC)) + 
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+ggplot(Banco_completo_renomeado, aes(y = IPC)) + 
+  geom_boxplot()
+
+```
+
+##PIB
+
+
+```{r}
+ggplot(Banco_completo_renomeado, aes(PIB)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=30) +
+  geom_density() 
+
+ggplot(Banco_completo_renomeado, 
+       aes(x = "", y = PIB)) + 
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+ggplot(Banco_completo_renomeado, aes(y = PIB)) + 
+  geom_boxplot()
+
+```
+
+
+##IDH
+
+```{r}
+
+ggplot(Banco_completo_renomeado, aes(IDH)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=1) +
+  geom_density() 
+
+ggplot(Banco_completo_renomeado, 
+       aes(x = "", y = IDH)) + 
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+ggplot(Banco_completo_renomeado, aes(y = IDH)) + 
+  geom_boxplot()
+
+```
+
+
+##Qualidade da democracia
+
+```{r}
+
+ggplot(Banco_completo_renomeado, aes(quali_democracia)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=5) +
+  geom_density() 
+
+ggplot(Banco_completo_renomeado, 
+       aes(x = "", y = quali_democracia)) + 
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+ggplot(Banco_completo_renomeado, aes(y = quali_democracia)) + 
+  geom_boxplot()
+
+```
+
+##Variáveis relativas à liberdade da mídia
+
+##v2meharjrn
+
+```{r}
+
+ggplot(Banco_completo_renomeado, aes(v2meharjrn)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=1) +
+  geom_density() 
+
+ggplot(Banco_completo_renomeado, 
+       aes(x = "", y = v2meharjrn)) + 
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+ggplot(Banco_completo_renomeado, aes(y = v2meharjrn)) + 
+  geom_boxplot()
+
+```
+
+##v2merange
+
+```{r}
+
+ggplot(Banco_completo_renomeado, aes(v2merange)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=1) +
+  geom_density() 
+
+ggplot(Banco_completo_renomeado, 
+       aes(x = "", y = v2merange)) + 
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+ggplot(Banco_completo_renomeado, aes(y = v2merange)) + 
+  geom_boxplot()
+
+```
+
+
+##v2mecrit
+
+```{r}
+
+ggplot(Banco_completo_renomeado, aes(v2mecrit)) + 
+  geom_histogram(aes(y=..density..),      
+                 binwidth=1) +
+  geom_density() 
+
+ggplot(Banco_completo_renomeado, 
+       aes(x = "", y = v2mecrit)) + 
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) 
+
+ggplot(Banco_completo_renomeado, aes(y = v2mecrit)) + 
+  geom_boxplot()
+
+```
+
+
+#Interações entre as variáveis
+
+Foram plotados gráficos com a finalidade de analisar as interações entre as variáveis.
+
+##PIBxIPC
+
+```{r}
+
+ggplot(Banco_completo_renomeado, 
+       aes(IPC, PIB)) +
+  geom_point(alpha = 1)
+
+ggplot(Banco_completo_renomeado, aes(PIB, IPC)) +
+  geom_jitter(alpha = 0.1)
+
+```
+
+##IDHxIPC
+
+```{r}
+ggplot(Banco_completo_renomeado, 
+       aes(IPC, IDH)) +
+  geom_point(alpha = 1)
+
+ggplot(Banco_completo_renomeado, aes(IDH, IPC)) +
+  geom_jitter(alpha = 0.1)
+
+```
+
+##Qualidade da democracia
+
+```{r}
+ggplot(Banco_completo_renomeado, 
+       aes(IPC, quali_democracia)) +
+  geom_point(alpha = 1)
+
+ggplot(Banco_completo_renomeado, aes(quali_democracia, IPC)) +
+  geom_jitter(alpha = 0.1)
+
+```
+
+##Variáveis relativas à liberdade da mídia
+
+##v2meharjrn]
+
+```{r}
+ggplot(Banco_completo_renomeado, 
+       aes(IPC, v2meharjrn)) +
+  geom_point(alpha = 1)
+
+ggplot(Banco_completo_renomeado, aes(v2meharjrn, IPC)) +
+  geom_jitter(alpha = 0.1)
+
+```  
+  
+
+##v2merange
+
+```{r}
+ggplot(Banco_completo_renomeado, 
+       aes(IPC, v2merange)) +
+  geom_point(alpha = 1)
+
+ggplot(Banco_completo_renomeado, aes(v2merange, IPC)) +
+  geom_jitter(alpha = 0.1)
+
+```
+
+##v2mecrit
+
+```{r}
+ggplot(Banco_completo_renomeado, 
+       aes(IPC, v2mecrit)) +
+  geom_point(alpha = 1)
+
+ggplot(Banco_completo_renomeado, aes(v2mecrit, IPC)) +
+  geom_jitter(alpha = 0.1)
+
+```
+
+#Testes de correlação
+
+Para verificar a associação entre duas variáveis contínuas, usamos o teste r de pearson 
+com a função cor.test(), de forma semelhante a função chisq.test():
+  
+  cor.test(banco$variavel_x, banco$variavel_y)
+
+O resultado apresenta ao seu final a correlação entre as variáveis. Logo antes,
+apresenta o intervalo de confianÃ§a da correlação. Se o valor 0 está neste intervalo, 
+o resultado não possui significÃ¢ncia estatística, como pode ser verificado pelo valor 
+do p-valor.
+
+
+##PIB
+
+```{r}
+cor.test(Banco_completo_renomeado$PIB, Banco_completo_renomeado$IPC)
+````
+
+##IDH
+
+```{r}
+cor.test(Banco_completo_renomeado$IDH, Banco_completo_renomeado$IPC)
+```
+
+##Qualidade da democracia
+
+```{r}
+cor.test(Banco_completo_renomeado$quali_democracia, Banco_completo_renomeado$IPC)
+```
+         
+##Variáveis de liberdade da mídia
+
+##v2meharjrn
+
+```{r}
+cor.test(Banco_completo_renomeado$v2meharjrn, Banco_completo_renomeado$IPC)
+```
+
+##v2merange
+
+```{r}
+cor.test(Banco_completo_renomeado$v2merange, Banco_completo_renomeado$IPC)
+```
+
+##v2mecrit
+
+```{r}
+cor.test(Banco_completo_renomeado$v2mecrit, Banco_completo_renomeado$IPC)
+```
+
+
+#Regressão Linear Multivariada
+
+```{r}
+regressao <- lm(IPC ~ PIB + IDH + v2meharjrn + v2merange + v2mecrit + quali_democracia, data = Banco_completo_renomeado)
+
+summary(regressao)
+```
+
+
+
+
